@@ -3,6 +3,7 @@
 
 import Database from 'better-sqlite3';
 import path from 'path';
+import { randomUUID } from 'crypto';
 
 const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
 const db = new Database(dbPath);
@@ -67,7 +68,12 @@ export const prismaClient = {
       return parseRow(stmt.get(...params));
     },
     create: (args: any) => {
-      const data = args.data;
+      const data = {
+        id: randomUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...args.data,
+      };
       const keys = Object.keys(data);
       const values = keys.map(k => data[k]);
       const placeholders = keys.map(() => '?').join(', ');
@@ -129,7 +135,12 @@ export const prismaClient = {
       return parseRow(stmt.get(...params));
     },
     create: (args: any) => {
-      const data = args.data;
+      const data = {
+        id: randomUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...args.data,
+      };
       const keys = Object.keys(data);
       const values = keys.map(k => typeof data[k] === 'boolean' ? (data[k] ? 1 : 0) : data[k]);
       const placeholders = keys.map(() => '?').join(', ');
@@ -399,6 +410,20 @@ export const prismaClient = {
   },
   $disconnect: async () => {
     db.close();
+  },
+  $transaction: async (callback: any) => {
+    // Simple transaction support - SQLite in better-sqlite3 is transactional by default
+    // We'll just execute the callback with the same client
+    // In a real implementation, you'd want to use db.transaction()
+    try {
+      db.exec('BEGIN TRANSACTION');
+      const result = await callback(prismaClient);
+      db.exec('COMMIT');
+      return result;
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
   },
 };
 
