@@ -5,8 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:mobile": "next build && next export",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "cap:init": "npx cap init",
+    "cap:add": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android",
+    "build:apk": "npm run build:mobile && npx cap sync && npx cap open android"
   },
   "dependencies": {
     "@prisma/client": "^7.0.1",

@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable standalone output for Docker deployments
-  output: 'standalone',
+  // Enable standalone output for Docker deployments, export for mobile
+  output: process.env.BUILD_MOBILE === 'true' ? 'export' : 'standalone',
 
   // Security headers
   async headers() {
