@@ -2,7 +2,9 @@
 
 🎉 **100% Market-Ready AI-Powered Construction Management Platform**
 
-A production-ready, multi-tenant SaaS platform designed specifically for small to medium-sized general contractors. Automate tedious administrative tasks using AI, integrate with QuickBooks Online, and streamline your entire construction workflow.
+📱 **Now Available as Mobile App (PWA & Android APK)**
+
+A production-ready, multi-tenant SaaS platform designed specifically for small to medium-sized general contractors. Automate tedious administrative tasks using AI, integrate with QuickBooks Online, and streamline your entire construction workflow. Available as web app, Progressive Web App (PWA), and native Android app.
 
 ## Quick Start
 
