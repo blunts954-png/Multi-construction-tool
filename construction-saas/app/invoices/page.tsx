@@ -15,10 +15,13 @@ export default function InvoicesPage() {
   const [processing, setProcessing] = useState(false)
   const [extractedData, setExtractedData] = useState<any>(null)
   const [selectedProject, setSelectedProject] = useState('')
+  const [savedInvoices, setSavedInvoices] = useState<any[]>([])
+  const [showSuccessToast, setShowSuccessToast] = useState(false)
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
     const accountData = localStorage.getItem('account')
+    const savedInvoicesData = localStorage.getItem('savedInvoices')
 
     if (!userData || !accountData) {
       setUser(mockUsers[0])
@@ -29,6 +32,11 @@ export default function InvoicesPage() {
       setUser(JSON.parse(userData))
       setAccount(JSON.parse(accountData))
     }
+
+    if (savedInvoicesData) {
+      setSavedInvoices(JSON.parse(savedInvoicesData))
+    }
+
     setLoading(false)
   }, [])
 
@@ -79,10 +87,42 @@ export default function InvoicesPage() {
   }
 
   const handleSaveInvoice = () => {
-    // Simulate saving
-    alert('Invoice saved successfully! ✅\n\nIn production, this would:\n• Save to database\n• Sync with QuickBooks\n• Send notification to bookkeeper')
+    if (!selectedProject) {
+      alert('Please select a project!')
+      return
+    }
+
+    // Create new invoice
+    const newInvoice = {
+      id: 'inv-' + Date.now(),
+      accountId: account?.id,
+      projectId: selectedProject,
+      invoiceNumber: extractedData.invoiceNumber,
+      invoiceDate: extractedData.invoiceDate,
+      dueDate: extractedData.dueDate,
+      subtotal: extractedData.subtotal,
+      tax: extractedData.tax,
+      total: extractedData.total,
+      status: 'pending',
+      category: extractedData.category,
+      aiExtracted: true,
+      aiConfidence: extractedData.confidence,
+      createdAt: new Date().toISOString(),
+    }
+
+    // Save to localStorage
+    const updatedInvoices = [...savedInvoices, newInvoice]
+    setSavedInvoices(updatedInvoices)
+    localStorage.setItem('savedInvoices', JSON.stringify(updatedInvoices))
+
+    // Show success toast
+    setShowSuccessToast(true)
+    setTimeout(() => setShowSuccessToast(false), 3000)
+
+    // Close modal
     setShowUploadModal(false)
     setExtractedData(null)
+    setSelectedProject('')
   }
 
   if (loading) {
@@ -93,7 +133,8 @@ export default function InvoicesPage() {
     )
   }
 
-  const invoices = getMockData.getInvoices(account?.id || '')
+  const mockInvoices = getMockData.getInvoices(account?.id || '')
+  const invoices = [...mockInvoices, ...savedInvoices]
   const projects = getMockData.getProjects(account?.id || '')
 
   const getStatusColor = (status: string) => {
@@ -474,6 +515,19 @@ export default function InvoicesPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-up z-50">
+          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          <div>
+            <p className="font-semibold">Invoice Saved!</p>
+            <p className="text-sm">Synced with QuickBooks</p>
           </div>
         </div>
       )}

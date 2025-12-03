@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMockData, mockAccount, mockUsers } from '@/lib/mockData'
 import Link from 'next/link'
+import DemoTour from '@/components/DemoTour'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -283,6 +284,9 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
+
+      {/* Demo Tour Component */}
+      <DemoTour />
     </div>
   )
 }
