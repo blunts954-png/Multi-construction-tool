@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getMockData, mockAccount, mockUsers } from '@/lib/mockData'
 import Link from 'next/link'
 import DemoTour from '@/components/DemoTour'
+import AIChatbot from '@/components/AIChatbot'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -288,6 +289,9 @@ export default function DashboardPage() {
 
       {/* Demo Tour Component */}
       <DemoTour />
+
+      {/* AI Chatbot Assistant */}
+      <AIChatbot />
     </div>
   )
 }
