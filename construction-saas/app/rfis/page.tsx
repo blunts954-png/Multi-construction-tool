@@ -148,53 +148,134 @@ export default function RFIsPage() {
             </div>
           </div>
 
-          {/* RFIs List */}
-          <div className="space-y-4">
-            {rfis.map((rfi) => {
-              const project = projects.find(p => p.id === rfi.projectId)
-              return (
-                <div key={rfi.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <span className="text-lg font-bold text-blue-600">{rfi.rfiNumber}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(rfi.status)}`}>
-                          {rfi.status.charAt(0).toUpperCase() + rfi.status.slice(1)}
-                        </span>
-                        <span className={`text-xs font-semibold ${getPriorityColor(rfi.priority)}`}>
-                          {rfi.priority.toUpperCase()}
-                        </span>
-                        {rfi.aiGenerated && (
-                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                            🤖 AI Generated
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{rfi.subject}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{rfi.question}</p>
-                      {rfi.response && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
-                          <p className="text-xs font-semibold text-green-900 mb-1">Response:</p>
-                          <p className="text-sm text-green-800">{rfi.response}</p>
-                        </div>
-                      )}
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        <span>📁 {project?.name || 'Unknown Project'}</span>
-                        {rfi.sentDate && <span>📤 Sent: {new Date(rfi.sentDate).toLocaleDateString()}</span>}
-                        {rfi.dueDate && <span>⏰ Due: {new Date(rfi.dueDate).toLocaleDateString()}</span>}
-                        {rfi.responseDate && <span>✅ Responded: {new Date(rfi.responseDate).toLocaleDateString()}</span>}
-                      </div>
-                    </div>
+          {/* RFIs Professional Data Table */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            {/* Table Header with Filters */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search RFIs..."
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                   </div>
-                  <div className="flex space-x-2">
-                    <button className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">View Details</button>
-                    {rfi.status === 'draft' && (
-                      <button className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">Send RFI</button>
-                    )}
-                  </div>
+                  <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <option>All Status</option>
+                    <option>Draft</option>
+                    <option>Sent</option>
+                    <option>Responded</option>
+                    <option>Closed</option>
+                  </select>
+                  <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <option>All Priority</option>
+                    <option>Urgent</option>
+                    <option>High</option>
+                    <option>Normal</option>
+                    <option>Low</option>
+                  </select>
                 </div>
-              )
-            })}
+                <div className="text-sm font-medium text-gray-600">
+                  {rfis.length} Total RFIs
+                </div>
+              </div>
+            </div>
+
+            {/* Professional Data Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-800 text-white">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">RFI #</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Subject</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Project</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Priority</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Due Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {rfis.map((rfi, index) => {
+                    const project = projects.find(p => p.id === rfi.projectId)
+                    return (
+                      <tr key={rfi.id} className="hover:bg-blue-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-bold text-blue-600">{rfi.rfiNumber}</span>
+                            {rfi.aiGenerated && (
+                              <span className="px-2 py-0.5 bg-purple-100 text-purple-600 rounded text-xs font-medium">AI</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="max-w-xs">
+                            <p className="text-sm font-medium text-gray-900 truncate">{rfi.subject}</p>
+                            <p className="text-xs text-gray-500 truncate">{rfi.question}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm text-gray-700 truncate max-w-xs">{project?.name || 'N/A'}</p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(rfi.status)}`}>
+                            {rfi.status.charAt(0).toUpperCase() + rfi.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`text-sm font-bold ${getPriorityColor(rfi.priority)}`}>
+                            {rfi.priority.charAt(0).toUpperCase() + rfi.priority.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {rfi.dueDate ? new Date(rfi.dueDate).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex space-x-2">
+                            <button className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="View">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                            <button className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors" title="Edit">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            {rfi.status === 'draft' && (
+                              <button className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors" title="Send">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Table Footer with Pagination */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing 1 to {rfis.length} of {rfis.length} entries
+                </div>
+                <div className="flex space-x-2">
+                  <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Previous</button>
+                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">1</button>
+                  <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Next</button>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>

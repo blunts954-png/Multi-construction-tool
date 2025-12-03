@@ -127,12 +127,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content */}
-      <div className="ml-64">
-        <main className="px-8 py-6">
+      <div className="ml-64 circuit-bg min-h-screen relative overflow-hidden">
+        <div className="circuit-dots"></div>
+        <main className="px-8 py-6 relative z-10">
           {/* Header */}
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
-            <p className="text-gray-600 mt-1">Welcome back, {user?.firstName}! Here's what's happening today.</p>
+            <h2 className="text-3xl font-bold text-white drop-shadow-lg">Dashboard</h2>
+            <p className="text-blue-200 mt-1">Welcome back, {user?.firstName}! Here's what's happening today.</p>
           </div>
 
           {/* Stats Grid */}
