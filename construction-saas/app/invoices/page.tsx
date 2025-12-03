@@ -53,37 +53,36 @@ export default function InvoicesPage() {
 
     setUploading(true)
 
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setUploading(false)
-    setProcessing(true)
+    try {
+      // Create form data with the actual file
+      const formData = new FormData()
+      formData.append('file', file)
 
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 2500))
+      // Simulate upload delay for UX
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setUploading(false)
+      setProcessing(true)
 
-    // Mock extracted data
-    const mockExtraction = {
-      vendor: 'Valley Lumber & Supply',
-      invoiceNumber: 'VLS-2024-' + Math.floor(Math.random() * 10000),
-      invoiceDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      subtotal: 15750.00,
-      tax: 1338.75,
-      total: 17088.75,
-      category: 'materials',
-      lineItems: [
-        { description: '2x4 Lumber - Premium Grade', quantity: 500, unitPrice: 8.50, amount: 4250.00 },
-        { description: 'Plywood Sheets 4x8', quantity: 100, unitPrice: 45.00, amount: 4500.00 },
-        { description: 'Construction Adhesive', quantity: 50, unitPrice: 12.00, amount: 600.00 },
-        { description: 'Deck Screws - 3" Box', quantity: 80, unitPrice: 18.00, amount: 1440.00 },
-        { description: 'Framing Nails', quantity: 40, unitPrice: 22.00, amount: 880.00 },
-        { description: 'Delivery & Handling', quantity: 1, unitPrice: 1080.00, amount: 1080.00 },
-      ],
-      confidence: 0.96,
+      // Call real AI processing API
+      const response = await fetch('/api/invoices/process', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to process invoice')
+      }
+
+      const extractedData = await response.json()
+
+      setExtractedData(extractedData)
+      setProcessing(false)
+    } catch (error) {
+      console.error('Error processing invoice:', error)
+      setProcessing(false)
+      setUploading(false)
+      alert('Failed to process invoice. Please try again.')
     }
-
-    setExtractedData(mockExtraction)
-    setProcessing(false)
   }
 
   const handleSaveInvoice = () => {
