@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getMockData, mockAccount, mockUsers } from '@/lib/mockData'
+import Link from 'next/link'
+import DemoTour from '@/components/DemoTour'
+import AIChatbot from '@/components/AIChatbot'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -10,13 +14,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is authenticated
+    // Check if user is authenticated (or use demo user)
     const token = localStorage.getItem('token')
     const userData = localStorage.getItem('user')
     const accountData = localStorage.getItem('account')
 
+    // For demo: If no auth, use mock data
     if (!token || !userData || !accountData) {
-      router.push('/login')
+      // Set demo user
+      setUser(mockUsers[0])
+      setAccount(mockAccount)
+      localStorage.setItem('user', JSON.stringify(mockUsers[0]))
+      localStorage.setItem('account', JSON.stringify(mockAccount))
+      setLoading(false)
       return
     }
 
@@ -40,204 +50,243 @@ export default function DashboardPage() {
     )
   }
 
+  // Get stats from mock data
+  const stats = getMockData.getProjectStats(account?.id || '')
+  const rfis = getMockData.getRFIs(account?.id || '')
+  const openRFIs = rfis.filter(r => r.status === 'sent' || r.status === 'draft').length
+  const invoices = getMockData.getInvoices(account?.id || '')
+  const pendingInvoices = invoices.filter(i => i.status === 'pending').length
+  const recentActivity = getMockData.getRecentActivity(account?.id || '', 5)
+  const changeOrders = getMockData.getChangeOrders(account?.id || '')
+  const pendingCOs = changeOrders.filter(co => co.status === 'pending').length
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {account?.companyName}
-              </h1>
-              <p className="text-sm text-gray-600">
-                Welcome back, {user?.firstName}!
-              </p>
+      {/* Sidebar Navigation */}
+      <div className="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white">
+        <div className="flex flex-col h-full">
+          <div className="p-6">
+            <h1 className="text-xl font-bold">Construction SaaS</h1>
+            <p className="text-sm text-gray-400 mt-1">{account?.companyName}</p>
+          </div>
+
+          <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+            <Link href="/dashboard" className="flex items-center px-4 py-2.5 bg-gray-800 rounded-lg text-sm">
+              🏠 <span className="ml-3">Dashboard</span>
+            </Link>
+            <div className="pt-2 pb-1 px-4 text-xs text-gray-500 uppercase tracking-wider">Sales</div>
+            <Link href="/crm" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              👥 <span className="ml-3">CRM & Pipeline</span>
+            </Link>
+            <Link href="/estimator" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🔧 <span className="ml-3">AI Estimator</span>
+            </Link>
+            <Link href="/estimates" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📋 <span className="ml-3">My Estimates</span>
+            </Link>
+            <div className="pt-2 pb-1 px-4 text-xs text-gray-500 uppercase tracking-wider">Operations</div>
+            <Link href="/projects" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🏗️ <span className="ml-3">Projects</span>
+            </Link>
+            <Link href="/invoices" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📄 <span className="ml-3">Invoices</span>
+            </Link>
+            <Link href="/invoices/create" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              ✏️ <span className="ml-3">Create Invoice</span>
+            </Link>
+            <Link href="/rfis" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              ❓ <span className="ml-3">RFIs</span>
+            </Link>
+            <Link href="/change-orders" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📝 <span className="ml-3">Change Orders</span>
+            </Link>
+          </nav>
+
+          <div className="p-4 border-t border-gray-800">
+            <div className="flex items-center mb-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-sm font-semibold">{user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+              </div>
             </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              className="w-full px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors text-sm"
             >
               Logout
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Success Message */}
-        <div className="mb-8 p-6 bg-green-50 border border-green-200 rounded-lg">
-          <h2 className="text-xl font-semibold text-green-900 mb-2">
-            🎉 Welcome to Construction SaaS!
-          </h2>
-          <p className="text-green-800">
-            Your account has been created successfully. You're now logged in as{' '}
-            <strong>{user?.role}</strong>.
-          </p>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Active Projects</p>
-                <p className="text-3xl font-bold text-gray-900">0</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                  />
-                </svg>
-              </div>
-            </div>
+      <div className="ml-64 circuit-bg min-h-screen relative overflow-hidden">
+        <div className="circuit-dots"></div>
+        <main className="px-8 py-6 relative z-10">
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-white drop-shadow-lg">Dashboard</h2>
+            <p className="text-blue-200 mt-1">Welcome back, {user?.firstName}! Here's what's happening today.</p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Open RFIs</p>
-                <p className="text-3xl font-bold text-gray-900">0</p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <svg
-                  className="w-6 h-6 text-yellow-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Active Projects</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{stats.active}</p>
+                  <p className="text-xs text-gray-500 mt-1">{stats.total} total</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Pending Invoices</p>
-                <p className="text-3xl font-bold text-gray-900">0</p>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Open RFIs</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{openRFIs}</p>
+                  <p className="text-xs text-gray-500 mt-1">{rfis.length} total</p>
+                </div>
+                <div className="p-3 bg-yellow-50 rounded-lg">
+                  <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
               </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <svg
-                  className="w-6 h-6 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"
-                  />
-                </svg>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Pending Invoices</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{pendingInvoices}</p>
+                  <p className="text-xs text-gray-500 mt-1">{invoices.length} total</p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Pending COs</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{pendingCOs}</p>
+                  <p className="text-xs text-gray-500 mt-1">{changeOrders.length} total</p>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-lg">
+                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              🏗️ Project Management
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Create and manage construction projects, track budgets, and
-              monitor progress.
-            </p>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Create Project
-            </button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              📄 AI Invoice Processing
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Upload invoices and let AI extract all data automatically. Sync
-              to QuickBooks.
-            </p>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Upload Invoice
-            </button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              ❓ RFIs & Change Orders
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Create RFIs and Change Orders, track responses, and manage scope
-              changes.
-            </p>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Create RFI
-            </button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              🎤 Voice Daily Reports
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Record voice logs from the field. AI converts them to structured
-              daily reports.
-            </p>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Record Report
-            </button>
-          </div>
-        </div>
-
-        {/* Account Info */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Account Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Name</p>
-              <p className="text-gray-900 font-medium">
-                {user?.firstName} {user?.lastName}
-              </p>
+          {/* Budget Overview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Overview</h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">Total Budget</span>
+                    <span className="font-semibold text-gray-900">${(stats.totalBudget / 1000000).toFixed(2)}M</span>
+                  </div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">Total Spent</span>
+                    <span className="font-semibold text-gray-900">${(stats.totalSpent / 1000000).toFixed(2)}M</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 mt-3">
+                    <div
+                      className="bg-blue-600 h-3 rounded-full"
+                      style={{ width: `${(stats.totalSpent / stats.totalBudget) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {((stats.totalSpent / stats.totalBudget) * 100).toFixed(1)}% of total budget used
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Email</p>
-              <p className="text-gray-900 font-medium">{user?.email}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Role</p>
-              <p className="text-gray-900 font-medium capitalize">
-                {user?.role}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Company</p>
-              <p className="text-gray-900 font-medium">
-                {account?.companyName}
-              </p>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+              <div className="space-y-3">
+                {recentActivity.slice(0, 5).map((activity) => (
+                  <div key={activity.id} className="flex items-start">
+                    <div className={`w-2 h-2 mt-2 rounded-full ${
+                      activity.type === 'invoice' ? 'bg-green-500' :
+                      activity.type === 'rfi' ? 'bg-yellow-500' :
+                      'bg-purple-500'
+                    }`}></div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                      <p className="text-xs text-gray-600">{activity.description}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(activity.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+
+          {/* Quick Actions */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-lg shadow-sm text-white mb-8">
+            <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Link
+                href="/projects"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm p-4 rounded-lg transition-all text-center"
+              >
+                <div className="text-2xl mb-2">📁</div>
+                <div className="text-sm font-medium">Projects</div>
+              </Link>
+              <Link
+                href="/invoices"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm p-4 rounded-lg transition-all text-center"
+              >
+                <div className="text-2xl mb-2">📄</div>
+                <div className="text-sm font-medium">Upload Invoice</div>
+              </Link>
+              <Link
+                href="/rfis"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm p-4 rounded-lg transition-all text-center"
+              >
+                <div className="text-2xl mb-2">❓</div>
+                <div className="text-sm font-medium">Create RFI</div>
+              </Link>
+              <Link
+                href="/change-orders"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm p-4 rounded-lg transition-all text-center"
+              >
+                <div className="text-2xl mb-2">📋</div>
+                <div className="text-sm font-medium">Change Orders</div>
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Demo Tour Component */}
+      <DemoTour />
+
+      {/* AI Chatbot Assistant */}
+      <AIChatbot />
     </div>
   )
 }
