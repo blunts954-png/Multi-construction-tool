@@ -4,13 +4,18 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMockData, mockAccount, mockUsers } from '@/lib/mockData'
 import Link from 'next/link'
+import DemoTour from '@/components/DemoTour'
+import AIChatbot from '@/components/AIChatbot'
 
 export default function ProjectsPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [account, setAccount] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all') // all, active, completed, on_hold
+  const [filter, setFilter] = useState('all')
+  const [showNewProject, setShowNewProject] = useState(false)
+  const [localProjects, setLocalProjects] = useState<any[]>([])
+  const [projectForm, setProjectForm] = useState({ name: '', address: '', city: '', state: 'CA', estimatedBudget: '' })
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
@@ -25,6 +30,8 @@ export default function ProjectsPage() {
       setUser(JSON.parse(userData))
       setAccount(JSON.parse(accountData))
     }
+    const savedProjects = localStorage.getItem('localProjects')
+    if (savedProjects) setLocalProjects(JSON.parse(savedProjects))
     setLoading(false)
   }, [])
 
@@ -35,6 +42,28 @@ export default function ProjectsPage() {
     router.push('/')
   }
 
+  const handleCreateProject = () => {
+    if (!projectForm.name) return
+    const newProject = {
+      id: 'proj-' + Date.now(),
+      accountId: account?.id,
+      name: projectForm.name,
+      address: projectForm.address,
+      city: projectForm.city,
+      state: projectForm.state,
+      status: 'active',
+      estimatedBudget: parseFloat(projectForm.estimatedBudget) || 0,
+      actualCost: 0,
+      startDate: new Date().toISOString(),
+      endDate: null,
+    }
+    const updated = [newProject, ...localProjects]
+    setLocalProjects(updated)
+    localStorage.setItem('localProjects', JSON.stringify(updated))
+    setProjectForm({ name: '', address: '', city: '', state: 'CA', estimatedBudget: '' })
+    setShowNewProject(false)
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -43,7 +72,8 @@ export default function ProjectsPage() {
     )
   }
 
-  const projects = getMockData.getProjects(account?.id || '')
+  const mockProjects = getMockData.getProjects(account?.id || '')
+  const projects = [...localProjects, ...mockProjects]
   const filteredProjects = filter === 'all'
     ? projects
     : projects.filter(p => p.status === filter)
@@ -72,40 +102,35 @@ export default function ProjectsPage() {
             <p className="text-sm text-gray-400 mt-1">{account?.companyName}</p>
           </div>
 
-          <nav className="flex-1 px-4 space-y-2">
-            <Link href="/dashboard" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Dashboard
+          <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+            <Link href="/dashboard" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🏠 <span className="ml-3">Dashboard</span>
             </Link>
-
-            <Link href="/projects" className="flex items-center px-4 py-3 bg-gray-800 rounded-lg">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              Projects
+            <div className="pt-2 pb-1 px-4 text-xs text-gray-500 uppercase tracking-wider">Sales</div>
+            <Link href="/crm" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              👥 <span className="ml-3">CRM & Pipeline</span>
             </Link>
-
-            <Link href="/invoices" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-              </svg>
-              Invoices
+            <Link href="/estimator" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🔧 <span className="ml-3">AI Estimator</span>
             </Link>
-
-            <Link href="/rfis" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              RFIs
+            <Link href="/estimates" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📋 <span className="ml-3">My Estimates</span>
             </Link>
-
-            <Link href="/change-orders" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              Change Orders
+            <div className="pt-2 pb-1 px-4 text-xs text-gray-500 uppercase tracking-wider">Operations</div>
+            <Link href="/projects" className="flex items-center px-4 py-2.5 bg-gray-800 rounded-lg text-sm">
+              🏗️ <span className="ml-3">Projects</span>
+            </Link>
+            <Link href="/invoices" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📄 <span className="ml-3">Invoices</span>
+            </Link>
+            <Link href="/invoices/create" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              ✏️ <span className="ml-3">Create Invoice</span>
+            </Link>
+            <Link href="/rfis" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              ❓ <span className="ml-3">RFIs</span>
+            </Link>
+            <Link href="/change-orders" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📝 <span className="ml-3">Change Orders</span>
             </Link>
           </nav>
 
@@ -138,7 +163,7 @@ export default function ProjectsPage() {
               <h2 className="text-3xl font-bold text-gray-900">Projects</h2>
               <p className="text-gray-600 mt-1">Manage all your construction projects</p>
             </div>
-            <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+            <button onClick={() => setShowNewProject(true)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
               + New Project
             </button>
           </div>
@@ -268,6 +293,66 @@ export default function ProjectsPage() {
           )}
         </main>
       </div>
+
+      {/* New Project Modal */}
+      {showNewProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Create New Project</h3>
+              <button onClick={() => setShowNewProject(false)} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
+                <input type="text" value={projectForm.name} onChange={e => setProjectForm({...projectForm, name: e.target.value})}
+                  placeholder="Office Renovation - Phase 1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <input type="text" value={projectForm.address} onChange={e => setProjectForm({...projectForm, address: e.target.value})}
+                  placeholder="123 Main St"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <input type="text" value={projectForm.city} onChange={e => setProjectForm({...projectForm, city: e.target.value})}
+                    placeholder="Los Angeles"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                  <select value={projectForm.state} onChange={e => setProjectForm({...projectForm, state: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    {['CA','TX','FL','NY','WA','OR','AZ','CO','NV','GA'].map(s => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Budget ($)</label>
+                <input type="number" value={projectForm.estimatedBudget} onChange={e => setProjectForm({...projectForm, estimatedBudget: e.target.value})}
+                  placeholder="500000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+              </div>
+              <div className="flex space-x-3 pt-2">
+                <button onClick={handleCreateProject} disabled={!projectForm.name}
+                  className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                  Create Project
+                </button>
+                <button onClick={() => setShowNewProject(false)}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DemoTour />
+      <AIChatbot />
     </div>
   )
 }

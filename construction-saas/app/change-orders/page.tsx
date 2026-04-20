@@ -4,12 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMockData, mockAccount, mockUsers } from '@/lib/mockData'
 import Link from 'next/link'
+import DemoTour from '@/components/DemoTour'
+import AIChatbot from '@/components/AIChatbot'
 
 export default function ChangeOrdersPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [account, setAccount] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [showNewCO, setShowNewCO] = useState(false)
+  const [localCOs, setLocalCOs] = useState<any[]>([])
+  const [coForm, setCoForm] = useState({ title: '', description: '', reason: '', priceImpact: '', scheduleImpact: '', projectId: '' })
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
@@ -24,6 +29,8 @@ export default function ChangeOrdersPage() {
       setUser(JSON.parse(userData))
       setAccount(JSON.parse(accountData))
     }
+    const savedCOs = localStorage.getItem('localCOs')
+    if (savedCOs) setLocalCOs(JSON.parse(savedCOs))
     setLoading(false)
   }, [])
 
@@ -34,11 +41,35 @@ export default function ChangeOrdersPage() {
     router.push('/')
   }
 
+  const handleCreateCO = () => {
+    if (!coForm.title) return
+    const projects = getMockData.getProjects(account?.id || '')
+    const newCO = {
+      id: 'co-' + Date.now(),
+      coNumber: 'CO-' + String(200 + localCOs.length + 1),
+      title: coForm.title,
+      description: coForm.description,
+      reason: coForm.reason,
+      priceImpact: parseFloat(coForm.priceImpact) || 0,
+      scheduleImpact: parseInt(coForm.scheduleImpact) || 0,
+      projectId: coForm.projectId || projects[0]?.id,
+      status: 'pending',
+      submittedDate: new Date().toISOString(),
+      aiGenerated: false,
+    }
+    const updated = [newCO, ...localCOs]
+    setLocalCOs(updated)
+    localStorage.setItem('localCOs', JSON.stringify(updated))
+    setCoForm({ title: '', description: '', reason: '', priceImpact: '', scheduleImpact: '', projectId: '' })
+    setShowNewCO(false)
+  }
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><div className="text-gray-600">Loading...</div></div>
   }
 
-  const changeOrders = getMockData.getChangeOrders(account?.id || '')
+  const mockCOs = getMockData.getChangeOrders(account?.id || '')
+  const changeOrders = [...localCOs, ...mockCOs]
   const projects = getMockData.getProjects(account?.id || '')
 
   const getStatusColor = (status: string) => {
@@ -69,36 +100,35 @@ export default function ChangeOrdersPage() {
             <h1 className="text-xl font-bold">Construction SaaS</h1>
             <p className="text-sm text-gray-400 mt-1">{account?.companyName}</p>
           </div>
-          <nav className="flex-1 px-4 space-y-2">
-            <Link href="/dashboard" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Dashboard
+          <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+            <Link href="/dashboard" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🏠 <span className="ml-3">Dashboard</span>
             </Link>
-            <Link href="/projects" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              Projects
+            <div className="pt-2 pb-1 px-4 text-xs text-gray-500 uppercase tracking-wider">Sales</div>
+            <Link href="/crm" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              👥 <span className="ml-3">CRM & Pipeline</span>
             </Link>
-            <Link href="/invoices" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-              </svg>
-              Invoices
+            <Link href="/estimator" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🔧 <span className="ml-3">AI Estimator</span>
             </Link>
-            <Link href="/rfis" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              RFIs
+            <Link href="/estimates" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📋 <span className="ml-3">My Estimates</span>
             </Link>
-            <Link href="/change-orders" className="flex items-center px-4 py-3 bg-gray-800 rounded-lg">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              Change Orders
+            <div className="pt-2 pb-1 px-4 text-xs text-gray-500 uppercase tracking-wider">Operations</div>
+            <Link href="/projects" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🏗️ <span className="ml-3">Projects</span>
+            </Link>
+            <Link href="/invoices" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📄 <span className="ml-3">Invoices</span>
+            </Link>
+            <Link href="/invoices/create" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              ✏️ <span className="ml-3">Create Invoice</span>
+            </Link>
+            <Link href="/rfis" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              ❓ <span className="ml-3">RFIs</span>
+            </Link>
+            <Link href="/change-orders" className="flex items-center px-4 py-2.5 bg-gray-800 rounded-lg text-sm">
+              📝 <span className="ml-3">Change Orders</span>
             </Link>
           </nav>
           <div className="p-4 border-t border-gray-800">
@@ -124,7 +154,7 @@ export default function ChangeOrdersPage() {
               <h2 className="text-3xl font-bold text-gray-900">Change Orders</h2>
               <p className="text-gray-600 mt-1">Track scope changes and budget impacts</p>
             </div>
-            <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">+ New Change Order</button>
+            <button onClick={() => setShowNewCO(true)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">+ New Change Order</button>
           </div>
 
           {/* Stats */}
@@ -215,6 +245,73 @@ export default function ChangeOrdersPage() {
           </div>
         </main>
       </div>
+
+      {/* New Change Order Modal */}
+      {showNewCO && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Create Change Order</h3>
+              <button onClick={() => setShowNewCO(false)} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <input type="text" value={coForm.title} onChange={e => setCoForm({...coForm, title: e.target.value})}
+                  placeholder="Additional electrical work..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea rows={2} value={coForm.description} onChange={e => setCoForm({...coForm, description: e.target.value})}
+                  placeholder="Describe the scope change..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                <input type="text" value={coForm.reason} onChange={e => setCoForm({...coForm, reason: e.target.value})}
+                  placeholder="Owner requested change..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price Impact ($)</label>
+                  <input type="number" value={coForm.priceImpact} onChange={e => setCoForm({...coForm, priceImpact: e.target.value})}
+                    placeholder="5000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Days Impact</label>
+                  <input type="number" value={coForm.scheduleImpact} onChange={e => setCoForm({...coForm, scheduleImpact: e.target.value})}
+                    placeholder="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                  <select value={coForm.projectId} onChange={e => setCoForm({...coForm, projectId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <option value="">Select</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex space-x-3 pt-2">
+                <button onClick={handleCreateCO} disabled={!coForm.title}
+                  className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                  Create Change Order
+                </button>
+                <button onClick={() => setShowNewCO(false)}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DemoTour />
+      <AIChatbot />
     </div>
   )
 }

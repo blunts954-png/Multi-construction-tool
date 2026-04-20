@@ -4,12 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMockData, mockAccount, mockUsers } from '@/lib/mockData'
 import Link from 'next/link'
+import DemoTour from '@/components/DemoTour'
+import AIChatbot from '@/components/AIChatbot'
 
 export default function RFIsPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [account, setAccount] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [showNewRFI, setShowNewRFI] = useState(false)
+  const [rfiForm, setRfiForm] = useState({ subject: '', question: '', priority: 'normal', projectId: '' })
+  const [localRFIs, setLocalRFIs] = useState<any[]>([])
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
@@ -24,6 +29,8 @@ export default function RFIsPage() {
       setUser(JSON.parse(userData))
       setAccount(JSON.parse(accountData))
     }
+    const savedRFIs = localStorage.getItem('localRFIs')
+    if (savedRFIs) setLocalRFIs(JSON.parse(savedRFIs))
     setLoading(false)
   }, [])
 
@@ -34,11 +41,33 @@ export default function RFIsPage() {
     router.push('/')
   }
 
+  const handleCreateRFI = () => {
+    if (!rfiForm.subject) return
+    const projects = getMockData.getProjects(account?.id || '')
+    const newRFI = {
+      id: 'rfi-' + Date.now(),
+      rfiNumber: 'RFI-' + String(100 + localRFIs.length + 1),
+      subject: rfiForm.subject,
+      question: rfiForm.question,
+      priority: rfiForm.priority,
+      projectId: rfiForm.projectId || projects[0]?.id,
+      status: 'draft',
+      dueDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+      aiGenerated: false,
+    }
+    const updated = [newRFI, ...localRFIs]
+    setLocalRFIs(updated)
+    localStorage.setItem('localRFIs', JSON.stringify(updated))
+    setRfiForm({ subject: '', question: '', priority: 'normal', projectId: '' })
+    setShowNewRFI(false)
+  }
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><div className="text-gray-600">Loading...</div></div>
   }
 
-  const rfis = getMockData.getRFIs(account?.id || '')
+  const mockRFIs = getMockData.getRFIs(account?.id || '')
+  const rfis = [...localRFIs, ...mockRFIs]
   const projects = getMockData.getProjects(account?.id || '')
 
   const getStatusColor = (status: string) => {
@@ -70,36 +99,35 @@ export default function RFIsPage() {
             <h1 className="text-xl font-bold">Construction SaaS</h1>
             <p className="text-sm text-gray-400 mt-1">{account?.companyName}</p>
           </div>
-          <nav className="flex-1 px-4 space-y-2">
-            <Link href="/dashboard" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Dashboard
+          <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+            <Link href="/dashboard" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🏠 <span className="ml-3">Dashboard</span>
             </Link>
-            <Link href="/projects" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              Projects
+            <div className="pt-2 pb-1 px-4 text-xs text-gray-500 uppercase tracking-wider">Sales</div>
+            <Link href="/crm" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              👥 <span className="ml-3">CRM & Pipeline</span>
             </Link>
-            <Link href="/invoices" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-              </svg>
-              Invoices
+            <Link href="/estimator" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🔧 <span className="ml-3">AI Estimator</span>
             </Link>
-            <Link href="/rfis" className="flex items-center px-4 py-3 bg-gray-800 rounded-lg">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              RFIs
+            <Link href="/estimates" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📋 <span className="ml-3">My Estimates</span>
             </Link>
-            <Link href="/change-orders" className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              Change Orders
+            <div className="pt-2 pb-1 px-4 text-xs text-gray-500 uppercase tracking-wider">Operations</div>
+            <Link href="/projects" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              🏗️ <span className="ml-3">Projects</span>
+            </Link>
+            <Link href="/invoices" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📄 <span className="ml-3">Invoices</span>
+            </Link>
+            <Link href="/invoices/create" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              ✏️ <span className="ml-3">Create Invoice</span>
+            </Link>
+            <Link href="/rfis" className="flex items-center px-4 py-2.5 bg-gray-800 rounded-lg text-sm">
+              ❓ <span className="ml-3">RFIs</span>
+            </Link>
+            <Link href="/change-orders" className="flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors text-sm">
+              📝 <span className="ml-3">Change Orders</span>
             </Link>
           </nav>
           <div className="p-4 border-t border-gray-800">
@@ -125,7 +153,7 @@ export default function RFIsPage() {
               <h2 className="text-3xl font-bold text-gray-900">RFIs</h2>
               <p className="text-gray-600 mt-1">Request for Information management</p>
             </div>
-            <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">+ New RFI</button>
+            <button onClick={() => setShowNewRFI(true)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">+ New RFI</button>
           </div>
 
           {/* Stats */}
@@ -279,6 +307,65 @@ export default function RFIsPage() {
           </div>
         </main>
       </div>
+
+      {/* New RFI Modal */}
+      {showNewRFI && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Create New RFI</h3>
+              <button onClick={() => setShowNewRFI(false)} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
+                <input type="text" value={rfiForm.subject} onChange={e => setRfiForm({...rfiForm, subject: e.target.value})}
+                  placeholder="Clarification needed on..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Question / Description</label>
+                <textarea rows={3} value={rfiForm.question} onChange={e => setRfiForm({...rfiForm, question: e.target.value})}
+                  placeholder="Describe the information requested..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                  <select value={rfiForm.priority} onChange={e => setRfiForm({...rfiForm, priority: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <option value="low">Low</option>
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                  <select value={rfiForm.projectId} onChange={e => setRfiForm({...rfiForm, projectId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <option value="">Select Project</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex space-x-3 pt-2">
+                <button onClick={handleCreateRFI} disabled={!rfiForm.subject}
+                  className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                  Create RFI
+                </button>
+                <button onClick={() => setShowNewRFI(false)}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DemoTour />
+      <AIChatbot />
     </div>
   )
 }
