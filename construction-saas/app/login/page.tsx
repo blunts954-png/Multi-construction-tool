@@ -2,137 +2,90 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { mockUsers, mockAccount } from '@/lib/mockData'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  })
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
+    // Demo mode: Accept ANY credentials and load demo user
+    const demoUser = mockUsers[0]
+    const demoAccount = mockAccount
 
-      const data = await response.json()
+    // Store in localStorage
+    localStorage.setItem('token', 'demo-token-' + Date.now())
+    localStorage.setItem('user', JSON.stringify(demoUser))
+    localStorage.setItem('account', JSON.stringify(demoAccount))
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed')
-      }
-
-      // Store token and user data
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      localStorage.setItem('account', JSON.stringify(data.account))
-
-      // Redirect to dashboard
-      router.push('/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
-    }
+    // Redirect to dashboard
+    router.push('/dashboard')
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back
-          </h1>
-          <p className="text-gray-600">
-            Sign in to your construction management account
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Construction SaaS</h1>
+          <p className="text-gray-600">AI-Powered Project Management</p>
+        </div>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-blue-800 font-semibold">🎯 DEMO MODE</p>
+          <p className="text-xs text-blue-700 mt-1">
+            Enter ANY email and password to access the demo
           </p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email Address
             </label>
             <input
-              type="email"
               id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-              placeholder="john@example.com"
+              placeholder="demo@example.com"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               Password
             </label>
             <input
-              type="password"
               id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-              placeholder="••••••••"
+              placeholder="Enter any password"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             />
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-lg hover:shadow-xl"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            Sign In to Demo
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600 text-sm">
-            Don't have an account?{' '}
-            <a
-              href="/register"
-              className="text-blue-600 font-semibold hover:text-blue-700"
-            >
-              Sign up
-            </a>
+          <p className="text-sm text-gray-600">
+            Demo User: <span className="font-semibold">John Martinez</span>
           </p>
-        </div>
-
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <a
-            href="/"
-            className="block text-center text-sm text-gray-600 hover:text-gray-900"
-          >
-            ← Back to home
-          </a>
+          <p className="text-sm text-gray-600">
+            Company: <span className="font-semibold">Premier Construction Co.</span>
+          </p>
         </div>
       </div>
     </div>
